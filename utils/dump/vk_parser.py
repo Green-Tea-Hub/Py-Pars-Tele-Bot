@@ -42,12 +42,37 @@ class GetVK:
                 pass
         return photos
 
-    def new_photos(self):
-        photos = self.get_photos()
+    def get_videos(self):
+        posts = self.get_posts()
+        videos = []
+        for post in posts:
+            try:
+                if post['attachments'][0]['type'] == "video":
+                    owner_id = post['attachments'][0]['video']['owner_id'].split(
+                        '-')[1]
+                    id = post['attachments'][0]['video']['id']
+                    video = f'https://vk.com/video-{owner_id}_{id}'
+                    videos.append(video)
+            except:
+                pass
+        return videos
 
-        with open('databases/links.txt', 'r+') as f:
-            if f.readline(1) != photos[-1]:
-                return False
-            else:
-                f.write(photos[-1])
-                return photos[-1]
+    def get_texts(self):
+        posts = self.get_posts()
+        texts = []
+        for post in posts:
+            try:
+                if post['text']:
+                    text = post['text']
+                    texts.append(text)
+            except:
+                pass
+        return texts
+
+
+# https://api.vk.com/method/video.get?videos=owner_id + _ + id + _ + access_key
+# https://api.vk.com/method/video.get?videos=26086420_456241200_614d1cfb11f73a63d4_86e8512286e8512286e85122c1869c2076886e886e85122d961af523e9d750cb2459c25
+# https://vk.com/video-56263398_456285706?list=61b6e7646bbef0b524
+# https://vk.com/video-56263398_456285457?list=5507bfc060d09395f3
+# f2e737b0cc4995e068
+# video_ffdd234eIFQ6BIgg4iT27sCmoCjNMF4CmyF9ZnOv0beiwTIXJqMRfi9ujCbhIPzgy_mUHfsCZjevFEplF8o
