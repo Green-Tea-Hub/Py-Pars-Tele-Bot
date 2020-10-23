@@ -1,26 +1,28 @@
 from aiogram import types
 from loader import dp
 
-from utils.dump import GetVK
+from utils.vk_api import GetVK
 
 
 @dp.message_handler(commands=["get"])
 async def take_me_photo(message: types.Message):
     text = [
         'Просматривает посты групп по:',
-        '/imgvk число id(ссылка)',
-        '/txtvk число id(ссылка)',
+        '/photo число id(ссылка)',
+        '/text число id(ссылка)',
         # '/video число id(ссылка)'
         'Пример:',
-        '/imgvk 1501 vk',
+        '/p 1501 https://vk.com/copypastme',
+        'Просматривает посты, не в каждом из них может быть картинка или текст',
     ]
     await message.answer('\n'.join(text))
 
 
-@dp.message_handler(lambda message: message.text.startswith('/imgvk'))
+@dp.message_handler(lambda message: message.text.startswith('/photo'))
 async def get_photos(message: types.Message):
     # numb = message.text[7:]
     stroke = message.text.split(' ')
+
     numb = stroke[1]
     vk_id = stroke[-1].split('/')[3]
 
@@ -34,9 +36,10 @@ async def get_photos(message: types.Message):
         await message.reply('Не корректно. /get')
 
 
-@dp.message_handler(lambda message: message.text.startswith('/txtvk'))
+@dp.message_handler(lambda message: message.text.startswith('/text'))
 async def get_texts(message: types.Message):
     stroke = message.text.split(' ')
+
     numb = stroke[1]
     vk_group_id = stroke[-1].split('/')[3]
 

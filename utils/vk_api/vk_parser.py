@@ -69,6 +69,8 @@ class GetVK:
                 pass
         return texts
 
+    def get_albums(self):
+        pass
 
 # https://api.vk.com/method/video.get?videos=owner_id + _ + id + _ + access_key
 # https://api.vk.com/method/video.get?videos=26086420_456241200_614d1cfb11f73a63d4_86e8512286e8512286e85122c1869c2076886e886e85122d961af523e9d750cb2459c25
@@ -76,3 +78,4 @@ class GetVK:
 # https://vk.com/video-56263398_456285457?list=5507bfc060d09395f3
 # f2e737b0cc4995e068
 # video_ffdd234eIFQ6BIgg4iT27sCmoCjNMF4CmyF9ZnOv0beiwTIXJqMRfi9ujCbhIPzgy_mUHfsCZjevFEplF8o
+# https://oauth.vk.com/authorize?client_id=*******&scope=notify,photos,friends,audio,video,notes,pages,docs,status,questions,offers,wall,groups,messages,notifications,stats,ads,offline,save&redirect_uri=http://api.vk.com/blank.html&display=page&v=5.68&response_type=token

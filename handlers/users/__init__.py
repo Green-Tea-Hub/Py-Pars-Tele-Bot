@@ -3,6 +3,7 @@ from .start import dp
 
 from .about import dp
 from .get import dp
+from .post import dp
 from .goquiz import dp
 from .subscriptions import dp
 
