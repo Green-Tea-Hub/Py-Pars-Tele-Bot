@@ -1,7 +1,9 @@
+import random
 import time
 import requests
-import random
+
 from data.config import VK_USERNAME, VK_PASSWORD
+
 
 API_URL = "https://api.vk.com/method/"
 version = "5.124"
@@ -26,16 +28,21 @@ class VK_API:
         """
         Get user access token
         """
-        return requests.post(
-            "https://oauth.vk.com/token?grant_type=password",
-            params={
-                'client_id': '3697615',
-                'client_secret': 'AlVXZFMUqyrnABp8ncuU',
-                'username': username,
-                'password': password
-            }).json()["access_token"]
+        try:
+            return requests.post(
+                "https://oauth.vk.com/token?grant_type=password",
+                params={
+                    'client_id': '3697615',
+                    'client_secret': 'AlVXZFMUqyrnABp8ncuU',
+                    'username': username,
+                    'password': password
+                }).json()["access_token"]
+        except Exception:
+            print('Auth error')
 
-    def get_wall(self, count: int, offset=0):
+    # get jsons
+
+    def _get_json_wall(self, count: int, offset=0):
         """
         Get JSON posts
         """
@@ -59,7 +66,7 @@ class VK_API:
 
         return posts
 
-    def get_wall_search(self, query: str, count: int, offset=0):
+    def _get_json_wall_search(self, query: str, count: int, offset=0):
         """
         Get searched JSON posts
         """
@@ -85,33 +92,10 @@ class VK_API:
 
         return posts
 
-    def get_wall_photos(self, count: int):
-        """
-        Get mass of photos from wall
-        """
-        posts = self.get_wall(count)
-        photos = []
-        for post in posts:
-            att = post['attachments'][0]
-            if att['type'] == "photo":
-                photos.append(att['photo']['sizes'][-1]['url'])
-        return photos
-
-    def get_wall_texts(self, count: int):
-        """
-        Get mass of texts from wall
-        """
-        posts = self.get_wall(count)
-        texts = []
-        for post in posts:
-            if post['text'] != "":
-                texts.append(post['text'])
-        return texts
-
-    def get_newsfeed(self, query: str, count: int):
+    def _get_json_newsfeed(self, query: str, count: int):
         pass
 
-    def get_newsfeed_search(self, query: str, count: int):
+    def _get_json_newsfeed_search(self, query: str, count: int):
         """
         Get searched JSON posts from news feed
         """
@@ -138,29 +122,164 @@ class VK_API:
 
         return posts
 
-    def send_wall_post(self, messages="", attachments=""):
+    def _get_json_groups(self, user_id: int, count: int, offset=0):
+        """
+        Get JSON user's groups
+        """
+        count += offset
+        groups = []
+
+        while offset < count:
+            groups.extend(
+                requests.get(
+                    API_URL + "groups.get",
+                    params={
+                        'access_token': self.user_token,
+                        'v': version,
+                        'user_id': user_id,
+                        'extended': 1,
+                        # 'filter': 'admin, editor, moder, advertiser, groups, publics, events, hasAddress',
+                        # 'fields': 'city, country, place, description, wiki_page, members_count, counters, start_date, finish_date, can_post, can_see_all_posts, activity, status, contacts, links, fixed_post, verified, site, can_create_topic',
+                        'count': count - offset,
+                        'offset': offset
+                    }).json()['response']['items'])
+            offset += 100
+            if count > 100:
+                time.sleep(0.5)
+
+        return groups
+
+    def _get_json_groups_search(self, query: str, count: int, offset=0):
+        """
+        Get searched JSON groups
+        """
+        count += offset
+        groups = []
+
+        while offset < count:
+            groups.extend(
+                requests.get(
+                    API_URL + "groups.search",
+                    params={
+                        'access_token': self.user_token,
+                        'v': version,
+                        'q': query,
+                        # 'country_id':
+                        # 'city_id':
+                        # 'future':
+                        # 'market':
+                        'sort': 0,  # 0-5
+                        'count': count - offset,
+                        'offset': offset
+                    }).json()['response']['items'])
+            offset += 100
+            if count > 100:
+                time.sleep(0.5)
+
+        return groups
+
+    # get mass
+
+    def get_mass_wall_photos(self, count: int):
+        """
+        Get mass of photos from wall
+        """
+        posts = self._get_json_wall(count)
+        photos = []
+        for post in posts:
+            att = post['attachments'][0]
+            if att['type'] == "photo":
+                photos.append(att['photo']['sizes'][-1]['url'])
+        return photos
+
+    def get_mass_wall_texts(self, count: int):
+        """
+        Get mass of texts from wall
+        """
+        posts = self._get_json_wall(count)
+        texts = []
+        for post in posts:
+            if post['text'] != "":
+                texts.append(post['text'])
+        return texts
+
+    # work with vk server
+
+    def send_wall_post(self, messages=None, attachments=None) -> None:
         """
         Send post on wall
         And print post ID
         """
-        response = requests.get(
-            API_URL + "wall.post",
-            params={
-                'owner_id': self.owner_id,
-                'message': messages,
-                'attachments': attachments,
-                'friends_only': 0,
-                'from_group': 1,
-                'signed': 0,
-                'publish_date': int(time.time()) + 3600,
-                'access_token': self.user_token,
-                'v': version
-            })
-
+        assert messages or attachments, 'need messages or attachments)'
+        try:
+            response = requests.get(
+                API_URL + "wall.post",
+                params={
+                    'owner_id': self.owner_id,
+                    'message': messages,
+                    'attachments': attachments,
+                    'friends_only': 0,
+                    'from_group': 1,
+                    'signed': 0,
+                    'publish_date': int(time.time()) + 3600,
+                    'access_token': self.user_token,
+                    'v': version
+                })
+        except Exception:
+            print("Sending error\nPost not send")
         print("Post #", response.json()['response']['post_id'])
 
-    def CopyPosts(self, count: str, offset=0):
-        posts = self.get_wall(count, offset)
+    def send_wall_post_report(self, post_id: int, reason: str) -> None:
+        """
+        Report post on wall
+        """
+        try:
+            requests.get(
+                API_URL + "wall.post",
+                params={
+                    'owner_id': self.owner_id,
+                    'post_id': post_id,
+                    'reason': reason,
+                    'access_token': self.user_token,
+                    'v': version
+                })
+        except Exception:
+            print("Sending error\nPost not send")
+
+    def send_wall_delete(self, post_id: int) -> None:
+        """
+        Delete post on wall
+        """
+        try:
+            requests.get(
+                API_URL + "wall.delete",
+                params={
+                    'owner_id': self.owner_id,
+                    'post_id': post_id,
+                    'access_token': self.user_token,
+                    'v': version
+                })
+        except Exception:
+            print("Sending error\nPost not delete")
+
+    def send_wall_restore(self, post_id: int) -> None:
+        """
+        Restore post on wall
+        """
+        try:
+            requests.get(
+                API_URL + "wall.restore",
+                params={
+                    'owner_id': self.owner_id,
+                    'post_id': post_id,
+                    'access_token': self.user_token,
+                    'v': version
+                })
+        except Exception:
+            print("Sending error\nPost not restore")
+
+    def CopyPosts(self, count: str, offset=0) -> None:
+        posts = self._get_json_wall(count, offset)
         for post in posts:
 
             text = post['text']
@@ -195,10 +314,3 @@ class VK_API:
                 timer = 1800 + int(random.uniform(0, 360))  # 33 min +-3
 
             time.sleep(timer)
-
-
-# a = VK_API().get_newsfeed_search(query="v", count=3)
-# print(a)
-# VK_API(group_domain="kusvjopky").CopyPosts(count=2, offset=100)
-# a = VK_API(group_domain="kusvjopky").get_wall_search(query="может", count=100)
-# print(a)
